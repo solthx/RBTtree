@@ -114,7 +114,7 @@ private void insert(RBTNode<T> node) {
 
 即把爷爷节点染红， 因为爷爷节点在这个情况下一定是黑的。
 
-为什么呢？ 因为根据性质"红色节点的孩子节点一定是黑节点"可以知道，如果爷爷节点是红色的，那么父节点和叔节点一定是黑色的，这与case2不符合，因此爷爷节点一定是黑色的。
+为什么呢？ 因为根据性质 "红色节点的孩子节点一定是黑节点" 可以知道，如果爷爷节点是红色的，那么父节点和叔节点一定是黑色的，这与case2不符合，因此爷爷节点一定是黑色的。
 
 把黑色的染红，就使得黑高-1. 因此局部黑高不变，并且满足了局部的所有性质
 
@@ -129,7 +129,87 @@ private void insert(RBTNode<T> node) {
 ![insertCase2_2](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case2_2.png)
 
 ### Case 3 插入节点的父节点是红色的，并且 （ 叔叔节点不存在 或 叔叔节点为黑色 ）
-Case 3-1 叔叔节点不存在的情况 和 
+#### Case 3-1 叔叔节点不存在的情况(下图1) 和 ( 叔叔节点为黑色 且 插入的节点和父亲节点和爷爷节点在一条线上(下图2) )  
+
 ![insertCase3_2](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case3_2.png)
 
 ![insertCase3_1](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case3_1.png)
+
+上面的两种情况(其实是四种。。)是可以直接进行旋转的，
+
+转换的原则和上面还是一样：
+    在不破坏局部黑高的情况，使得两个红色节点不相连.
+
+这里的解决方法就是:
+    把父亲节点染黑和爷爷节点染红，然后对爷爷节点进行右旋
+
+    之所以这么做，是因为要让局部根(就是爷爷节点)的颜色不变，然后把左子树多余的点移到右边,
+    而为了保证黑高不变，必须移过去的是红色节点。
+
+    基于上面的两个考虑，就通过把父节点染黑(作为局部根, 这里的爷爷节点一定是黑色的，原因上面讲过了), 然后把爷爷节点染红(作为移到右子树的点)，然后对爷爷节点进行右旋转.
+
+因此，对于case 3_1的解决办法就是：
+    1. 把父节点染黑，把爷爷节点染红
+    2. 对爷爷节点做右旋操作.
+
+#### Case 3-2 叔叔节点不存在的情况(下图1) 和 ( 叔叔节点为黑色 且 插入的节点和父亲节点和爷爷节点呈Z字形(下图2) )  
+
+![insertCase3_3](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case3_3.png)
+
+![insertCase3_4](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case3_4.png)
+
+这两种情况直接对父节点进行左旋，就变成了Case3-1的情况.
+
+
+Case3的代码:
+```java
+private void insertFixUp(RBTNode<T> node) {
+    RBTNode<T> x = node;
+    RBTNode<T> uncle;
+    RBTNode<T> father;
+    // case 1 父节点是黑色，直接结束
+    while (x != null && x.parent != null && x.parent.color == RED) {
+        father = x.parent;
+        if (x.parent == x.parent.parent.left) {
+            // x.parent是左孩子
+            uncle = father.parent.right;
+            if (uncle != null && uncle.color == RED) { // case 2
+                father.color = BLACK;
+                uncle.color = BLACK;
+                father.parent.color = RED; // 为了保持黑高不变，上面的两个操作使得黑高增加了1，那么就要把一个黑色节点置红，使得黑高-1
+            } else {
+                // case3
+                // uncle==null || uncle.color==BLACK
+                if (x == x.parent.right) {
+                    // case 3-2
+                    x = father;
+                    leftRotate(father); // case 3-2 转变成了case 3-1
+                }
+                // case 3-1
+                father = x.parent;
+                father.color = BLACK;
+                father.parent.color = RED;
+                rightRotate(father.parent);
+            }
+        } else { // 上面的镜像
+            uncle = father.parent.left;
+            if (uncle != null && uncle.color == RED) {
+                uncle.color = BLACK;
+                father.color = BLACK;
+                father.parent.color = RED;
+            } else {
+                if (x == x.parent.left) {
+                    x = father;
+                    rightRotate(father);
+                }
+                father = x.parent;
+                father.color = BLACK;
+                father.parent.color = RED;
+                leftRotate(father.parent);
+            }
+        }
+        x = father.parent;
+    }
+    mRoot.color = BLACK;
+}
+```
