@@ -104,4 +104,32 @@ private void insert(RBTNode<T> node) {
 
 #### Case 2 插入节点的父节点是红色的，并且 ( 叔叔节点存在 且 叔叔节点为红色 ）
 这种情况会变成下面这张图: 
-![insertCase2](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5case2.png)
+![insertCase2_1](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5case2.png)
+
+上图画的只是一个树的局部(左下角)
+
+这个时候，只要把parent和uncle给染黑，
+
+那么当前就局部成立了， 但是，因为染黑节点，导致了局部黑高+1， 局部黑高+1， 就会破坏“每个节点到任意一个叶子节点的黑高相同” 这一性质， 因此我们要给局部的黑高-1
+
+即把爷爷节点染红， 因为爷爷节点在这个情况下一定是黑的。
+
+为什么呢？ 因为根据性质"红色节点的孩子节点一定是黑节点"可以知道，如果爷爷节点是红色的，那么父节点和叔节点一定是黑色的，这与case2不符合，因此爷爷节点一定是黑色的。
+
+把黑色的染红，就使得黑高-1. 因此局部黑高不变，并且满足了局部的所有性质
+
+同时，因为爷爷节点被染红，所以可能会导致“上面的局部”性质被破坏，因此需要向上传递继续fixUp
+
+当前节点x变成爷爷节点，然后继续判断.
+
+因此，对于case2应进行的操作就是:
+1. 把叔节点和父节点染黑
+2. 把爷爷节点染红, 变成了下图
+3. 向上传递，把爷爷节点当作当前节点，然后继续向上fixUp
+![insertCase2_2](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case2_2.png)
+
+### Case 3 插入节点的父节点是红色的，并且 （ 叔叔节点不存在 或 叔叔节点为黑色 ）
+Case 3-1 叔叔节点不存在的情况 和 
+![insertCase3_2](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case3_2.png)
+
+![insertCase3_1](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case3_1.png)
