@@ -1,9 +1,10 @@
 /**
  * Java 语言: 二叉查找树
  *
- * @author : solthx
- * @date : 2019/09/18
+ * @author solthx
+ * @date 2019/09/18
  */
+
 public class RBT<T extends Comparable<T>> {
     // 红黑树节点定义
     private RBTNode<T> mRoot; // 根节点
@@ -34,14 +35,6 @@ public class RBT<T extends Comparable<T>> {
     }
 
     // ================插入和删除操作================
-    /*
-     * 对红黑树的节点(x)进行左旋转
-     *
-     * 左旋示意图(对节点x进行左旋)： px px / / x y / \ --(左旋)-. / \ # lx y x ry / \ / \ ly ry lx
-     * ly
-     *
-     *
-     */
     private void leftRotate(RBTNode<T> x) {
         // 友情提示, 写这种程序，最好画个图.
         RBTNode<T> y = x.right;
