@@ -106,6 +106,8 @@ public class RBT<T extends Comparable<T>> {
         int cmp = 0;
         RBTNode<T> y = null;
         RBTNode<T> x = mRoot;
+        // y是插入位置的父节点(因为插入位置肯定是null嘛)
+        // x负责找插入位置
         while (x != null) {
             y = x;
             cmp = node.key.compareTo(x.key);
@@ -116,6 +118,7 @@ public class RBT<T extends Comparable<T>> {
             else
                 return;
         }
+        // 更新插入新节点的父节点
         node.parent = y;
         if (y != null) {
             // 树不空
@@ -124,9 +127,8 @@ public class RBT<T extends Comparable<T>> {
                 y.left = node;
             else
                 y.right = node;
-        } else
-            mRoot = node; // 树空
-
+        } else // y 如果是null,说明插在根的位置，也就是树空
+            mRoot = node;
         // 插入的节点一定为RED
         node.color = RED;
         // 插入修正
@@ -137,50 +139,44 @@ public class RBT<T extends Comparable<T>> {
      * case 1: 叔叔是红色 case 2: (叔叔不存在 或 叔叔是黑色) 且呈z字形 case 3: (叔叔不存在 或 叔叔是黑色) 且呈一条斜线
      */
     private void insertFixUp(RBTNode<T> node) {
-        // 三种case对照算法导论上的三种case
-        // 建议对着图来看
         RBTNode<T> x = node;
         RBTNode<T> uncle;
         RBTNode<T> father;
+        // case 1 父节点是黑色，直接结束
         while (x != null && x.parent != null && x.parent.color == RED) {
             father = x.parent;
             if (x.parent == x.parent.parent.left) {
                 // x.parent是左孩子
                 uncle = father.parent.right;
-                if (uncle != null && uncle.color == RED) { // case 1
+                if (uncle != null && uncle.color == RED) { // case 2
                     father.color = BLACK;
                     uncle.color = BLACK;
                     father.parent.color = RED; // 为了保持黑高不变，上面的两个操作使得黑高增加了1，那么就要把一个黑色节点置红，使得黑高-1
                 } else {
-                    // case2 或 case3
+                    // case3
                     // uncle==null || uncle.color==BLACK
                     if (x == x.parent.right) {
-                        // case 2
+                        // case 3-2
                         x = father;
-                        leftRotate(father); // case 2 转变成了case 3
+                        leftRotate(father); // case 3-2 转变成了case 3-1
                     }
-                    // case 3
+                    // case 3-1
                     father = x.parent;
                     father.color = BLACK;
                     father.parent.color = RED;
                     rightRotate(father.parent);
                 }
-            } else {
-                // x是右孩子
+            } else { // 上面的镜像
                 uncle = father.parent.left;
-                if (uncle != null && uncle.color == RED) {// case 1
+                if (uncle != null && uncle.color == RED) {
                     uncle.color = BLACK;
                     father.color = BLACK;
                     father.parent.color = RED;
                 } else {
-                    // case 2 or case 3
-                    // uncle==null || uncle.color == BLACK
                     if (x == x.parent.left) {
-                        // case 2
                         x = father;
                         rightRotate(father);
                     }
-                    // case 3
                     father = x.parent;
                     father.color = BLACK;
                     father.parent.color = RED;
@@ -225,7 +221,6 @@ public class RBT<T extends Comparable<T>> {
             else if (x.parent.left == x)
                 x.parent.left = null;
             else {
-                // System.out.println(x.parent.key);
                 x.parent.right = null;
 
             }
@@ -259,21 +254,12 @@ public class RBT<T extends Comparable<T>> {
             remove(replace);
             x.key = replace.key;
             x.color = replace.color;
-            replace = x; // !!!!! 回头再补这条
+            replace = x;
         }
-        // debug
-        // preOrder();
-        // System.out.println();
         if (originalColor == BLACK && mRoot != null)
             removeFixUp(replace, x.parent);
     }
 
-    /*
-     * case 1: 兄弟节点是红色, 直接旋转并染色 case 2: 兄弟节点是黑色, 且兄弟节点的左右孩子都是黑色 case 3: 兄弟节点是黑色，且:
-     * 3.1 若兄弟节点是父节点的右节点, 那么兄弟节点的左节点为红色, 右孩子为黑色 3.2 若兄弟节点是父节点的左节点,
-     * 那么兄弟节点的右节点为红色，左孩子为黑色 case 4: 兄弟节点是黑色, 且: 4.1 若兄弟节点是父节点的右节点, 那么兄弟节点的右节点为红色 4.2
-     * 若兄弟节点是父节点的左节点, 那么兄弟节点的左节点为红色
-     */
     private void removeFixUp(RBTNode<T> x, RBTNode<T> p) {
         if (x == null)
             return;
@@ -343,7 +329,8 @@ public class RBT<T extends Comparable<T>> {
                 x = mRoot;
             }
         }
-        mRoot.color = BLACK;
+        if (x != null)
+            x.color = BLACK;
     }
     // ================插入和删除操作 end================
 
