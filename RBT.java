@@ -65,13 +65,6 @@ public class RBT<T extends Comparable<T>> {
             x.right.parent = x;
     }
 
-    /*
-     * 对红黑树的节点(y)进行右旋转
-     *
-     * 右旋示意图(对节点y进行左旋)： py py / / y x / \ --(右旋)-. / \ # x ry lx y / \ / \ # lx rx
-     * rx ry
-     * 
-     */
     private void rightRotate(RBTNode<T> y) {
         // 上面的镜像操作，不多解释
         RBTNode<T> x = y.left;
@@ -135,9 +128,6 @@ public class RBT<T extends Comparable<T>> {
         insertFixUp(node);
     }
 
-    /*
-     * case 1: 叔叔是红色 case 2: (叔叔不存在 或 叔叔是黑色) 且呈z字形 case 3: (叔叔不存在 或 叔叔是黑色) 且呈一条斜线
-     */
     private void insertFixUp(RBTNode<T> node) {
         RBTNode<T> x = node;
         RBTNode<T> uncle;
