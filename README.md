@@ -135,7 +135,7 @@ private void insert(RBTNode<T> node) {
 
 ![insertCase3_1](https://github.com/solthx/RBTtree/blob/master/pic/%E6%8F%92%E5%85%A5Case3_1.png)
 
-上面的两种情况(其实是四种。。)是可以直接进行旋转的，
+上面的两种情况是可以直接进行旋转的，
 
 转换的原则和上面还是一样：
     在不破坏局部黑高的情况，使得两个红色节点不相连.
@@ -213,3 +213,108 @@ private void insertFixUp(RBTNode<T> node) {
     mRoot.color = BLACK;
 }
 ```
+
+
+## 四、删除操作(Remove)
+红黑树的删除操作要比插入操作复杂一些.  不过和插入操作类似，也是被分为两个部分, 即: 删除和修正(删除之后可能会破坏红黑树的上面的几个性质，所以要进行修正(fix-up))
+
+### 1. 节点的删除(remove)
+这一部分和bst的删除思想是一样, 但还是有几个地方不同:
+1. 需要记录被删除节点的颜色
+2. 需要更新parent节点(画图防漏)
+3. 必要的话，记得更新根节点
+4. 多了一个fix-up操作
+
+```java
+private void remove(RBTNode<T> x) {
+    boolean originalColor = x.color; // 记录即将被删除的节点颜色
+    // x表示被删除的那个节点，replace表示"删除了x之后，在x的那个位置上的那个节点"
+    RBTNode<T> replace; 
+    if (x.left == null && x.right == null) {
+        // 左右孩子都不存在，直接删除该节点
+        replace = null;
+        if (x.parent == null)
+            mRoot = null;
+        else if (x.parent.left == x)
+            x.parent.left = null;
+        else 
+            x.parent.right = null;
+    } else if (x.left == null) {
+        // 左孩子不存在，删除该节点，就把右孩子拉上来
+        replace = x.right;
+        x.right.parent = x.parent;
+        if (x.parent == null)
+            mRoot = x.right;
+        else if (x.parent.left == x)
+            x.parent.left = x.right;
+        else
+            x.parent.right = x.right;
+    } else if (x.right == null) {
+        // 右孩子不存在，删除该节点，就把左孩子上位
+        replace = x.right;
+        x.left.parent = x.parent;
+        if (x.parent == null)
+            mRoot = x.left;
+        else if (x.parent.left == x)
+            x.parent.left = x.left;
+        else
+            x.parent.right = x.left;
+    } else {
+        // 左右孩子都存在，去右子树把最小节点赋值给当前节点，然后删除右子树的那个最小节点
+        // 思想和bst的删除一样
+        replace = x.right;
+        while (replace.left != null)
+            replace = replace.left;
+        originalColor = replace.color;
+        // 用replace来替换x
+        // 然后再删除replace
+        remove(replace);
+        // 把右子树的最小节点赋值给x
+        x.key = replace.key;
+        x.color = replace.color;
+        // 因此，x就变成了替换之后的节点
+        // 更新replace
+        replace = x;  
+    }
+    // 如果被删除的那个节点是黑色的, 那么黑高被改变，就需要进行fix-Up
+    if (originalColor == BLACK && mRoot != null)
+        removeFixUp(replace, x.parent);
+}
+```
+
+
+### 2. 删除修正操作(removeFixUp)
+只有当被删除的节点是黑色节点的时候，才会进行删除修正的操作，因为黑色节点的删除导致了黑高的改变，破坏了性质.
+
+因为删除修正的情况，主要是围绕着以下几个节点：
+    1. 删除节点的位置(被删除的是x，删除了x之后，x节点被replace节点所替换，所以这里实际是replace)
+    2. 删除节点的兄弟节点sib
+    3. 兄弟节点的左右子节点
+如下图所示, 因为只是为了说明节点关系，因此并没有进行颜色上的表示:
+![removeCase0_1](https://github.com/solthx/RBTtree/blob/master/pic/removeFixUp0_1.png)
+
+再次强调，下面的所有case都是在删除掉的节点是黑色的情况下发生的，也就是说此时，高度已经不平衡了。
+
+然后下面的case以在左子树来举例子，思想理解了以后，右子树的情况就是左子树的镜像情况.
+
+#### case 1 兄弟节点sib是红色的情况
+下图为case 1的情况，旁边数字表示黑高，可以很显然的看到左子树的黑高比右子树要少1
+![removeCase1_1](https://github.com/solthx/RBTtree/blob/master/pic/removeFixUp1_1.png)
+
+对于这种情况，解决方法是把case 1的情况转换成case 2,3,4的情况，也就是兄弟节点sib是黑色的情况. 那么该怎么转换呢?
+
+因为sib的颜色是红色的，所以sib的左孩子节点一定是黑色的或不存在的, 
+也就是说，如果通过旋转，能够使得sib的左孩子节点变成当前replace节点的兄弟节点的话，那么就可以把case 1的情况转换到case 2,3,4了，
+
+这一想法可以通过旋转来实现. 也就是通过对parent节点进行左旋，旋转之后，当前的sib就变成了parent的parent, 当前sib的左孩子就变成了parent的右孩子，replace依然是parent的左孩子，
+这时，就变成了如下这张图.
+![removeCase1_2](https://github.com/solthx/RBTtree/blob/master/pic/removeFixUp1_2.png)
+
+但因为旋转的关系，黑高变的很乱了，因为我们要把这种不平衡的关系向下转移，所以尽量不要影响上层，因此尽量保证上层的右子树黑高依然是n+1, 左子树的黑高依然是n，然后向下传递，
+
+所以我们只要把原parent染红，原sib染黑，就可以了, 
+
+因此，现在只要解决掉原parent的位置的不平衡情况就可以了，
+
+此时replace的兄弟节点一定是黑色的或者是不存在的，也就是case 2 3 4的情况了！ 如下图所示
+![removeCase1_3](https://github.com/solthx/RBTtree/blob/master/pic/removeFixUp1_3.png)
