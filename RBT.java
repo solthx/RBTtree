@@ -1,8 +1,8 @@
 /**
  * Java 语言: 二叉查找树
  *
- * @author solthx
- * @date 2019/09/18
+ * @author : solthx
+ * @date : 2019/09/18
  */
 public class RBT<T extends Comparable<T>> {
     // 红黑树节点定义
